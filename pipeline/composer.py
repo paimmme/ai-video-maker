@@ -89,21 +89,28 @@ def concat_clips(clip_paths: list[Path], output_path: Path) -> Path:
 
 
 def burn_subtitles(video_path: Path, srt_path: Path, output_path: Path) -> Path:
-    """Burn SRT subtitles into video."""
+    """Embed SRT soft subtitles (mov_text) — no libass needed."""
     cmd = [
         "ffmpeg", "-y",
         "-i", str(video_path),
-        "-vf", f"subtitles={str(srt_path.resolve())}",
+        "-i", str(srt_path),
+        "-c:v", "copy",
         "-c:a", "copy",
+        "-c:s", "mov_text",
+        "-metadata:s:s:0", "language=chi",
         "-movflags", "+faststart",
         str(output_path),
     ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""
+        raise RuntimeError(f"FFmpeg subtitle embed failed (exit {e.returncode}): {stderr[:300]}")
     return output_path
 
 
 def add_bgm(video_path: Path, bgm_path: Path, bgm_volume: float, output_path: Path) -> Path:
-    """Mix background music into video."""
+    """Mix background music into video, preserving subtitle track."""
     cmd = [
         "ffmpeg", "-y",
         "-i", str(video_path),
@@ -111,7 +118,9 @@ def add_bgm(video_path: Path, bgm_path: Path, bgm_volume: float, output_path: Pa
         "-filter_complex",
         f"[0:a]volume=1.0[a0];[1:a]volume={bgm_volume}[a1];"
         f"[a0][a1]amix=inputs=2:duration=first:dropout_transition=2",
+        "-map", "0:v", "-map", "[a0]", "-map", "0:s?",
         "-c:v", "copy",
+        "-c:s", "copy",
         "-movflags", "+faststart",
         str(output_path),
     ]

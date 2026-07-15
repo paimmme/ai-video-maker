@@ -62,24 +62,17 @@ async def _siliconflow_gen(api_key: str, model: str, prompt: str, out_path: Path
 
 
 async def _placeholder_gen(prompt: str, out_path: Path, width: int, height: int) -> bool:
-    """Generate a simple gradient placeholder image (no external deps)."""
-    # Use ImageMagick if available, otherwise skip
+    """Generate colored placeholder image via FFmpeg."""
     import subprocess
     import random
 
     r, g, b = random.randint(30, 200), random.randint(30, 200), random.randint(30, 200)
-    r2 = min(255, r + 40)
-    g2 = min(255, g + 40)
-    b2 = min(255, b + 40)
+    color = f"0x{r:02x}{g:02x}{b:02x}"
 
     cmd = [
-        "convert", "-size", f"{width}x{height}",
-        f"gradient:rgb({r},{g},{b})-rgb({r2},{g2},{b2})",
-        "-font", "Noto-Sans-CJK-SC",
-        "-pointsize", "48",
-        "-fill", "white",
-        "-gravity", "center",
-        "-annotate", "+0+0", prompt[:30],
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", f"color=c={color}:s={width}x{height}:d=1",
+        "-frames:v", "1",
         str(out_path),
     ]
     try:
