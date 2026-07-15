@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.env
+output/videos/
+output/audio/
+output/images/
+output/subtitles/
+*.mp4
+*.wav
+*.mp3

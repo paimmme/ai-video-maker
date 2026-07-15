@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-video-maker"
+version = "0.1.0"
+description = "从文案直出 Bilibili 视频"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+    "pyyaml>=6.0",
+    "edge-tts>=6.0",
+    "httpx>=0.25",
+    "openai>=1.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["pipeline*"]
+
+[tool.setuptools.package-data]
+pipeline = ["py.typed"]
